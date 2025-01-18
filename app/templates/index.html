@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <title>Todo App</title>
+</head>
+<body class="bg-indigo-100/50 min-h-screen pb-12">
+    <div class="max-w-2xl mx-auto pt-12 px-4 space-y-6">
+        <!-- Active Tasks Card -->
+        <div class="bg-white rounded-xl shadow-lg p-6 relative">
+            <h1 class="text-2xl font-semibold mb-6 text-center">TODO LIST</h1>
+
+            <!-- Search and Filter Bar -->
+            <div class="flex items-center gap-2 mb-6">
+                <div class="relative flex-1">
+                    <input type="text" id="searchInput" placeholder="Search note..." 
+                           class="w-full pl-10 pr-4 py-2 rounded-lg border border-indigo-200 focus:outline-none focus:border-indigo-400">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 absolute left-3 top-2.5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
+                    </svg>
+                </div>
+                
+                <!-- Filters -->
+                <div class="flex gap-2">
+                    <!-- Priority Filter -->
+                    <select name="priority" id="priorityFilter" class="px-4 py-2 rounded-lg border border-indigo-200 bg-white text-gray-700">
+                        <option value="">Priority</option>
+                        <option value="L1" {% if priority == "L1" %}selected{% endif %}>Low</option>
+                        <option value="L2" {% if priority == "L2" %}selected{% endif %}>Medium</option>
+                        <option value="L3" {% if priority == "L3" %}selected{% endif %}>High</option>
+                    </select>
+
+                    <!-- Date Filter -->
+                    <input type="date" name="date" id="dateFilter" 
+                           class="px-4 py-2 rounded-lg border border-indigo-200 bg-white text-gray-700"
+                           value="{{ date if date else '' }}">
+
+                    <!-- Search Button -->
+                    <button class="p-2 rounded-lg bg-indigo-100 text-indigo-600" onclick="applyFilters()">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Active Todo List -->
+            <div class="space-y-3" id="activeTodos">
+                {% for todo in todos %}
+                <div class="flex items-center gap-3 todo-item" data-task="{{ todo.task.lower() }}" data-id="{{ todo._id }}" data-priority="{{ todo.priority }}" data-date="{{ todo.date }}">
+                    <!-- Custom Checkbox -->
+                    <label class="relative cursor-pointer">
+                        <input type="checkbox" class="hidden peer" onchange="moveToCompleted(this)">
+                        <div class="w-6 h-6 rounded-full border-2 border-indigo-400 flex items-center justify-center transition-all peer-checked:bg-indigo-400">
+                            <svg class="w-4 h-4 text-white opacity-0 peer-checked:opacity-100 transition-opacity" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                            </svg>
+                        </div>
+                    </label>
+
+                    <!-- Todo Content -->
+                    <div class="flex-1">
+                        <p class="text-gray-800">{{ todo.task }}</p>
+                        <p class="text-sm text-gray-500">Due: {{ todo.date }}</p>
+                    </div>
+
+                    <!-- Edit Button -->
+                    <button onclick="openEditModal('{{ todo._id }}', '{{ todo.task }}', '{{ todo.priority }}', '{{ todo.date }}')" 
+                            class="text-blue-500 hover:text-blue-700">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                        </svg>
+                    </button>
+
+                    <!-- Delete Button -->
+                    <button onclick="deleteTodo('{{ todo._id }}')" class="text-red-500 hover:text-red-700">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+                        </svg>
+                    </button>
+                </div>
+                {% endfor %}
+            </div>
+
+<!-- Add Todo Button -->
+            <button onclick="openAddModal()" 
+                    class="absolute right-6 w-12 h-12 bg-indigo-500 rounded-full shadow-lg flex items-center justify-center text-white hover:bg-indigo-600 transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                </svg>
+            </button>
+        </div>
+
+        <!-- Completed Tasks Card -->
+        <div class="bg-white rounded-xl shadow-lg p-6 relative" id="completedTasksCard" style="display: none;">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-semibold">Completed Tasks</h2>
+                <button onclick="clearCompletedTasks()" 
+                        class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors">
+                    Clear All
+                </button>
+            </div>
+            <div class="space-y-3" id="completedTodos">
+                <!-- Completed todos will be inserted here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Todo Modal -->
+    <div id="addTodoModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+        <div class="bg-white rounded-lg p-6 w-full max-w-md">
+            <h2 class="text-xl font-semibold mb-4">Add New Todo</h2>
+            <form action="/add" method="POST" class="space-y-4">
+                <div>
+                    <input type="text" name="task" placeholder="Task" required
+                           class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:border-indigo-400">
+                </div>
+                <div>
+                    <select name="priority" class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:border-indigo-400">
+                        <option value="L1">Low</option>
+                        <option value="L2">Medium</option>
+                        <option value="L3">High</option>
+                    </select>
+                </div>
+                <div>
+                    <input type="date" name="date" required
+                           class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:border-indigo-400">
+                </div>
+                <div class="flex justify-end gap-2">
+                    <button type="button" onclick="closeModal('addTodoModal')"
+                            class="px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50">
+                        Cancel
+                    </button>
+                    <button type="submit"
+                            class="px-4 py-2 rounded-lg bg-indigo-500 text-white hover:bg-indigo-600">
+                        Add Todo
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit Todo Modal -->
+    <div id="editTodoModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+        <div class="bg-white rounded-lg p-6 w-full max-w-md">
+            <h2 class="text-xl font-semibold mb-4">Edit Todo</h2>
+            <form id="editForm" method="POST" class="space-y-4">
+                <div>
+                    <input type="text" name="task" id="editTask" placeholder="Task" required
+                           class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:border-indigo-400">
+                </div>
+                <div>
+                    <select name="priority" id="editPriority" 
+                            class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:border-indigo-400">
+                        <option value="L1">L1</option>
+                        <option value="L2">L2</option>
+                        <option value="L3">L3</option>
+                    </select>
+                </div>
+                <div>
+                    <input type="date" name="date" id="editDate" required
+                           class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:border-indigo-400">
+                </div>
+                <div class="flex justify-end gap-2">
+                    <button type="button" onclick="closeModal('editTodoModal')"
+                            class="px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50">
+                        Cancel
+                    </button>
+                    <button type="submit"
+                            class="px-4 py-2 rounded-lg bg-indigo-500 text-white hover:bg-indigo-600">
+                        Update
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+
+
+
+        function moveToCompleted(checkbox) {
+            const todoItem = checkbox.closest('.todo-item');
+            const completedSection = document.getElementById('completedTodos');
+            const completedCard = document.getElementById('completedTasksCard');
+            
+            if (checkbox.checked) {
+                // Clone the item and modify it for completed section
+                const completedItem = todoItem.cloneNode(true);
+                completedItem.querySelector('input[type="checkbox"]').checked = true;
+                completedItem.querySelector('input[type="checkbox"]').disabled = true;
+                
+                // Remove edit button from completed item
+                const editButton = completedItem.querySelector('button[onclick^="openEditModal"]');
+                if (editButton) editButton.remove();
+                
+                // Add to completed section
+                completedSection.appendChild(completedItem);
+                completedCard.style.display = 'block';
+                
+                // Remove from active todos
+                todoItem.remove();
+            }
+        }
+
+         // Function to clear all completed tasks
+         function clearCompletedTasks() {
+            const completedSection = document.getElementById('completedTodos');
+            const completedCard = document.getElementById('completedTasksCard');
+            completedSection.innerHTML = '';
+            completedCard.style.display = 'none';
+        }
+
+        // Enhanced filter function
+        function applyFilters() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const priority = document.getElementById('priorityFilter').value;
+            const date = document.getElementById('dateFilter').value;
+            const todos = document.querySelectorAll('#activeTodos .todo-item');
+            
+            todos.forEach(todo => {
+                const task = todo.dataset.task;
+                const todoPriority = todo.dataset.priority;
+                const todoDate = todo.dataset.date;
+                
+                const matchesSearch = task.includes(searchTerm);
+                const matchesPriority = !priority || todoPriority === priority;
+                const matchesDate = !date || todoDate === date;
+                
+                if (matchesSearch && matchesPriority && matchesDate) {
+                    todo.style.display = '';
+                } else {
+                    todo.style.display = 'none';
+                }
+            });
+        }
+
+        // Add event listeners for real-time filtering
+        document.getElementById('searchInput').addEventListener('input', applyFilters);
+        document.getElementById('priorityFilter').addEventListener('change', applyFilters);
+        document.getElementById('dateFilter').addEventListener('change', applyFilters);
+
+        // Delete todo function
+        function deleteTodo(todoId) {
+            if (confirm('Are you sure you want to delete this todo?')) {
+                fetch(`/delete/${todoId}`).then(() => {
+                    window.location.reload();
+                });
+            }
+        }
+        // Modal functionality
+        function openAddModal() {
+            document.getElementById('addTodoModal').classList.remove('hidden');
+        }
+
+        function openEditModal(id, task, priority, date) {
+            const modal = document.getElementById('editTodoModal');
+            const form = document.getElementById('editForm');
+            form.action = `/update/${id}`;
+            
+            document.getElementById('editTask').value = task;
+            document.getElementById('editPriority').value = priority;
+            document.getElementById('editDate').value = date;
+            
+            modal.classList.remove('hidden');
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.add('hidden');
+        }
+
+        // Search functionality
+        function performSearch() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const todos = document.querySelectorAll('.todo-item');
+            
+            todos.forEach(todo => {
+                const task = todo.dataset.task;
+                if (task.includes(searchTerm)) {
+                    todo.style.display = '';
+                } else {
+                    todo.style.display = 'none';
+                }
+            });
+        }
+
+        // Listen for input changes
+        document.getElementById('searchInput').addEventListener('input', performSearch);
+
+        // Close modals when clicking outside
+        window.onclick = function(event) {
+            const modals = [document.getElementById('addTodoModal'), document.getElementById('editTodoModal')];
+            modals.forEach(modal => {
+                if (event.target === modal) {
+                    modal.classList.add('hidden');
+                }
+            });
+        }
+    </script>
+</body>
+</html>

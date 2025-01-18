@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='/css/styles.css') }}">
+    <title>Edit Todo</title>
+</head>
+<body>
+    <h1>Edit Todo</h1>
+    <form action="/update/{{ todo._id }}" method="POST">
+        <input type="text" name="task" value="{{ todo.task }}" required>
+        <select name="priority">
+            <option value="L1" {% if todo.priority == "L1" %}selected{% endif %}>L1</option>
+            <option value="L2" {% if todo.priority == "L2" %}selected{% endif %}>L2</option>
+            <option value="L3" {% if todo.priority == "L3" %}selected{% endif %}>L3</option>
+        </select>
+        <input type="date" name="date" value="{{ todo.date }}" required>
+        <button type="submit">Update</button>
+    </form>
+    <a href="/">Cancel</a>
+</body>
+</html>
