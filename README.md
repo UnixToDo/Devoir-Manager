@@ -1,5 +1,5 @@
 # DevoirManager
-School course assignments and tasks manager.
+To-Do List tasks manager.
 It performs CRUD operations.
 
 ## Tech Stack
